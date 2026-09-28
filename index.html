@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>T-REX AGENCY - Dashboard Mutasi Koin</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+  <!-- HEADER -->
+  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <div class="p-2 bg-amber-500/10 rounded-lg border border-amber-500/20 text-amber-500">
+            <i class="fa-solid fa-coins text-2xl"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-xl font-bold tracking-tight text-white">T-REX AGENCY</h1>
+              <span class="px-2 py-0.5 text-xs bg-amber-500/20 text-amber-400 font-bold rounded">TRX</span>
+            </div>
+            <p class="text-xs text-slate-400">Dashboard Mutasi Koin</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="status-badge" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-700 text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-slate-400 mr-2"></span> Offline (Data Lokal)
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+
+    <!-- PANEL GOOGLE SHEETS SINKRONISASI -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <i class="fa-solid fa-link text-amber-500"></i> Sinkronisasi Real-Time Google Sheets
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Hubungkan dasbor langsung dengan Google Spreadsheet Anda. Data akan terbarui otomatis!</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" id="sheets-url" placeholder="Tempel URL Web App Google Apps Script di sini..." class="w-full md:w-96 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-amber-500">
+          <button id="btn-connect" onclick="connectSheets()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium text-sm rounded-lg transition">Hubungkan</button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-slate-700 text-xs text-slate-400">
+        <div class="flex items-center gap-2">
+          <span>Refresh setiap:</span>
+          <select id="auto-refresh-time" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 focus:outline-none">
+            <option value="10000">10 Detik</option>
+            <option value="30000" selected>30 Detik</option>
+            <option value="60000">1 Menit</option>
+            <option value="300000">5 Menit</option>
+          </select>
+        </div>
+        <div id="last-sync-time">Terakhir disinkronkan: -</div>
+      </div>
+    </div>
+
+    <!-- KARTU RINGKASAN STATISTIK (KPI) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 mb-1">Saldo Terakhir</p>
+        <p id="kpi-saldo" class="text-lg font-bold text-amber-400">0</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 mb-1">Total Masuk</p>
+        <p id="kpi-masuk" class="text-lg font-bold text-emerald-400">0</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 mb-1">Total Keluar</p>
+        <p id="kpi-keluar" class="text-lg font-bold text-rose-400">0</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 mb-1">Keluar (Reseller)</p>
+        <p id="kpi-reseller" class="text-lg font-bold text-sky-400">0</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 mb-1">Keluar (Referal)</p>
+        <p id="kpi-referal" class="text-lg font-bold text-indigo-400">0</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 mb-1">Total Riwayat</p>
+        <p id="kpi-total-rows" class="text-lg font-bold text-white">0</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 mb-1">Total User (ID)</p>
+        <p id="kpi-unique-users" class="text-lg font-bold text-purple-400">0</p>
+      </div>
+    </div>
+
+    <!-- FILTER & PENCARIAN -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
+      <div class="w-full md:w-1/3 relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+        <input type="text" id="search-input" onkeyup="applyFilters()" placeholder="Cari ID, Nama, Note, atau Akun..." class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-amber-500">
+      </div>
+      <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <select id="filter-account" onchange="applyFilters()" class="bg-slate-900 border border-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none">
+          <option value="ALL">Semua Akun</option>
+        </select>
+        <button onclick="resetFilters()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-xs rounded-lg transition">Reset Filter</button>
+      </div>
+    </div>
+
+    <!-- TABEL DATA MUTASI -->
+    <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-slate-300">
+          <thead class="text-xs text-slate-400 uppercase bg-slate-900/60 border-b border-slate-700">
+            <tr>
+              <th class="px-4 py-3">Tanggal & Waktu</th>
+              <th class="px-4 py-3">Akun</th>
+              <th class="px-4 py-3">ID</th>
+              <th class="px-4 py-3">Note 1 (Nama)</th>
+              <th class="px-4 py-3">Note 2</th>
+              <th class="px-4 py-3">Reseller</th>
+              <th class="px-4 py-3">Referal</th>
+              <th class="px-4 py-3 text-right">Keluar</th>
+              <th class="px-4 py-3 text-right">Masuk</th>
+              <th class="px-4 py-3 text-right">Saldo</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr>
+              <td colspan="10" class="text-center py-8 text-slate-500">Belum ada data. Hubungkan ke Google Sheets atau periksa URL Anda.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINASI -->
+      <div class="p-4 border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-400">
+        <span id="data-count-info">Menampilkan 0 data</span>
+        <div class="flex items-center gap-2">
+          <button id="btn-prev" onclick="changePage(-1)" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded disabled:opacity-50">SBLM</button>
+          <span id="page-indicator">Hal 1 / 1</span>
+          <button id="btn-next" onclick="changePage(1)" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded disabled:opacity-50">LJN</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT UTAMA -->
+  <script>
+    let rawData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    const rowsPerPage = 20;
+    let refreshIntervalTimer = null;
+
+    // Inisialisasi saat halaman selesai di-load
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedUrl = localStorage.getItem('gsheet_url');
+      if (savedUrl) {
+        document.getElementById('sheets-url').value = savedUrl;
+        connectSheets();
+      }
+    });
+
+    async function connectSheets() {
+      const url = document.getElementById('sheets-url').value.trim();
+      if (!url) return alert('Silakan masukkan Web App URL Google Sheets terlebih dahulu!');
+
+      localStorage.setItem('gsheet_url', url);
+      const btn = document.getElementById('btn-connect');
+      btn.innerText = 'Memuat...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if (json.success && json.data) {
+          rawData = json.data;
+          updateStatus(true);
+          populateAccountDropdown();
+          applyFilters();
+          
+          document.getElementById('last-sync-time').innerText = `Terakhir disinkronkan: ${new Date().toLocaleTimeString('id-ID')}`;
+        } else {
+          alert('Gagal mengambil data. Format JSON tidak sesuai.');
+        }
+      } catch (err) {
+        alert('Terjadi kesalahan koneksi ke URL Google Apps Script Anda.');
+        updateStatus(false);
+      } finally {
+        btn.innerText = 'Hubungkan';
+        btn.disabled = false;
+      }
+
+      setupAutoRefresh();
+    }
+
+    function setupAutoRefresh() {
+      if (refreshIntervalTimer) clearInterval(refreshIntervalTimer);
+      const ms = parseInt(document.getElementById('auto-refresh-time').value) || 30000;
+      refreshIntervalTimer = setInterval(() => {
+        const url = document.getElementById('sheets-url').value.trim();
+        if (url) connectSheets();
+      }, ms);
+    }
+
+    function updateStatus(isOnline) {
+      const badge = document.getElementById('status-badge');
+      if (isOnline) {
+        badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span> Terhubung (Sheets)';
+      } else {
+        badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400 mr-2"></span> Terputus / Error';
+      }
+    }
+
+    function populateAccountDropdown() {
+      const select = document.getElementById('filter-account');
+      const accounts = [...new Set(rawData.map(item => item.akun).filter(Boolean))];
+      
+      select.innerHTML = '<option value="ALL">Semua Akun</option>';
+      accounts.forEach(acc => {
+        const opt = document.createElement('option');
+        opt.value = acc;
+        opt.textContent = acc;
+        select.appendChild(opt);
+      });
+    }
+
+    function applyFilters() {
+      const keyword = document.getElementById('search-input').value.toLowerCase();
+      const accountFilter = document.getElementById('filter-account').value;
+
+      filteredData = rawData.filter(item => {
+        const matchKeyword = !keyword || 
+          String(item.id).toLowerCase().includes(keyword) ||
+          String(item.note1).toLowerCase().includes(keyword) ||
+          String(item.note2).toLowerCase().includes(keyword) ||
+          String(item.akun).toLowerCase().includes(keyword) ||
+          String(item.reseller).toLowerCase().includes(keyword);
+
+        const matchAccount = accountFilter === 'ALL' || item.akun === accountFilter;
+
+        return matchKeyword && matchAccount;
+      });
+
+      currentPage = 1;
+      updateKPIs(filteredData);
+      renderTable();
+    }
+
+    function resetFilters() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('filter-account').value = 'ALL';
+      applyFilters();
+    }
+
+    function updateKPIs(data) {
+      let totalMasuk = 0;
+      let totalKeluar = 0;
+      let totalReseller = 0;
+      let totalReferal = 0;
+      const uniqueUsers = new Set();
+
+      data.forEach(item => {
+        totalMasuk += (item.masuk || 0);
+        totalKeluar += (item.keluar || 0);
+        if (item.reseller) totalReseller += (item.keluar || 0);
+        if (item.referal) totalReferal += (item.keluar || 0);
+        if (item.id) uniqueUsers.add(item.id);
+      });
+
+      const lastSaldo = data.length > 0 ? (data[data.length - 1].saldo || 0) : 0;
+
+      document.getElementById('kpi-saldo').innerText = lastSaldo.toLocaleString('id-ID');
+      document.getElementById('kpi-masuk').innerText = totalMasuk.toLocaleString('id-ID');
+      document.getElementById('kpi-keluar').innerText = totalKeluar.toLocaleString('id-ID');
+      document.getElementById('kpi-reseller').innerText = totalReseller.toLocaleString('id-ID');
+      document.getElementById('kpi-referal').innerText = totalReferal.toLocaleString('id-ID');
+      document.getElementById('kpi-total-rows').innerText = data.length;
+      document.getElementById('kpi-unique-users').innerText = uniqueUsers.size;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      if (filteredData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-slate-500">Tidak ada data ditemukan.</td></tr>`;
+        document.getElementById('data-count-info').innerText = 'Menampilkan 0 data';
+        document.getElementById('page-indicator').innerText = 'Hal 1 / 1';
+        return;
+      }
+
+      const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+      const startIdx = (currentPage - 1) * rowsPerPage;
+      const pageData = filteredData.slice(startIdx, startIdx + rowsPerPage);
+
+      pageData.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-700/50 hover:bg-slate-700/30 transition';
+
+        tr.innerHTML = `
+          <td class="px-4 py-3 whitespace-nowrap text-slate-400 text-xs">${row.tanggal || '-'}</td>
+          <td class="px-4 py-3 font-medium text-white">${row.akun || '-'}</td>
+          <td class="px-4 py-3 font-mono text-amber-400">${row.id || '-'}</td>
+          <td class="px-4 py-3">${row.note1 || '-'}</td>
+          <td class="px-4 py-3 text-slate-400">${row.note2 || '-'}</td>
+          <td class="px-4 py-3 text-sky-400">${row.reseller || '-'}</td>
+          <td class="px-4 py-3 text-indigo-400">${row.referal || '-'}</td>
+          <td class="px-4 py-3 text-right font-medium text-rose-400">${row.keluar ? row.keluar.toLocaleString('id-ID') : '-'}</td>
+          <td class="px-4 py-3 text-right font-medium text-emerald-400">${row.masuk ? row.masuk.toLocaleString('id-ID') : '-'}</td>
+          <td class="px-4 py-3 text-right font-bold text-amber-300">${row.saldo ? row.saldo.toLocaleString('id-ID') : '0'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('data-count-info').innerText = `Menampilkan ${startIdx + 1} - ${Math.min(startIdx + rowsPerPage, filteredData.length)} dari ${filteredData.length} data`;
+      document.getElementById('page-indicator').innerText = `Hal ${currentPage} / ${totalPages}`;
+      document.getElementById('btn-prev').disabled = currentPage === 1;
+      document.getElementById('btn-next').disabled = currentPage === totalPages;
+    }
+
+    function changePage(delta) {
+      currentPage += delta;
+      renderTable();
+    }
+  </script>
+</body>
+</html>
